@@ -1,0 +1,277 @@
+<html>
+  <head>
+    <title>Todo Website using MVC Architecture</title>
+    <style>
+      #todo--list {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        row-gap: 20px;
+        margin-top: 10px;
+      }
+      .todo--element {
+        display: flex;
+        width: 40%;
+        justify-content: space-between;
+        max-width: 350px;
+      }
+
+      .todo--data {
+        min-width: 200px;
+        max-width: 210px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <input id="todo--title" type="text" />
+    <input id="date--picker" type="date" />
+    <button onclick="addTodo()">Click Me</button>
+    <div id="todo--list"></div>
+
+    <script>
+      // =====================================================================================================================================================================================================
+      // Model Section :- Contain creation & Managing code of data.
+      // If localstorage has a todos array, then use it
+      // Otherwise use the deault array.
+      let todos;
+
+      // Retrieve localStorage
+      const savedTodos = JSON.parse(localStorage.getItem("todos"));
+
+      // check it it's an array.
+      if (Array.isArray(savedTodos)) {
+        todos = savedTodos;
+      } else {
+        todos = [
+          {
+            title: "Get groceries",
+            dueDate: "2020-10-04",
+            id: "id1",
+            isDone: true,
+            isEdited: false,
+            isDisabled: false,
+          },
+          {
+            title: "Wash car",
+            dueDate: "2021-02-03",
+            id: "id2",
+            isDone: true,
+            isEdited: false,
+            isDisabled: false,
+          },
+          {
+            title: "Make Dinner",
+            dueDate: "2021-03-04",
+            id: "id3",
+            isDone: true,
+            isEdited: false,
+            isDisabled: false,
+          },
+        ];
+      }
+
+      // creating a Todo
+      function createTodo(todoTitle, dueDate) {
+        const id = "" + new Date().getTime();
+        todos.push({
+          title: todoTitle,
+          dueDate: dueDate,
+          id: id,
+          isDone: false,
+          isEdited: false,
+          isDisabled: false,
+        });
+
+        saveTodos();
+      }
+
+      // Deleting a Todo
+      function removeTodo(idToDelete) {
+        todos = todos.filter((todo) => {
+          return todo.id != idToDelete;
+        });
+
+        saveTodos();
+      }
+
+      // Change the checkbox
+      function changeCheck(idToChange) {
+        todos = todos.map((todo) => {
+          return todo.id === idToChange
+            ? { ...todo, isDone: !todo.isDone }
+            : todo;
+        });
+        saveTodos();
+      }
+
+      function modifyEdit(idToEdit) {
+        todos = todos.map((todo) => {
+          return todo.id === idToEdit
+            ? { ...todo, isEdited: !todo.isEdited }
+            : { ...todo, isDisabled: true };
+        });
+
+        saveTodos();
+      }
+
+      function modifyTodo(idToUpdate, updateInput, updateDate) {
+        todos = todos.map((todo) => {
+          return todo.id === idToUpdate
+            ? {
+                ...todo,
+                title: updateInput,
+                dueDate: updateDate,
+                isEdited: false,
+              }
+            : todo;
+        });
+        saveTodos();
+      }
+
+      function saveTodos() {
+        // Browser provide us some code to save and retrieve data - localstorage.
+        localStorage.setItem("todos", JSON.stringify(todos));
+      }
+
+      // =====================================================================================================================================================================================================
+      // Controller Section
+      function addTodo() {
+        // Should contains only the controller code.
+        let textbox = document.getElementById("todo--title");
+        let todoTitle = textbox.value;
+
+        let datePicker = document.getElementById("date--picker");
+        let dueDate = datePicker.value;
+
+        // Minimum code for other sections.
+        createTodo(todoTitle, dueDate);
+        render();
+      }
+
+      function deleteTodo(event) {
+        // onclik function is provided with an Object called, event.
+        const deleteButton = event.target;
+        const idToDelete = deleteButton.id;
+
+        removeTodo(idToDelete);
+        render();
+      }
+
+      function checkTodo(event) {
+        const ele = event.target;
+        const idToChange = ele.id;
+
+        changeCheck(idToChange);
+        render();
+      }
+
+      function editTodo(event) {
+        const ele = event.target;
+        const idToEdit = ele.id;
+
+        modifyEdit(idToEdit);
+        render();
+      }
+
+      function updateTodo(event) {
+        const idToUpdate = event.target.id;
+        const updateInput = document.getElementById("updateInput").value;
+        const updateDate = document.getElementById("updateDate").value;
+
+        modifyTodo(idToUpdate, updateInput, updateDate);
+        render();
+      }
+
+      render();
+
+      // =====================================================================================================================================================================================================
+      // View Section
+
+      function render() {
+        // reset the list.
+        let todoList = document.getElementById("todo--list");
+        todoList.innerText = "";
+
+        todos.forEach((todo) => {
+          // creation of div element for each todo item
+          const outerElement = document.createElement("div");
+          outerElement.className = "todo--element";
+
+          // creation of div element for todo title
+          const element = document.createElement("div");
+          element.innerText = todo.title + " " + todo.dueDate;
+          element.style.display = "inline-block";
+          element.className = "todo--data";
+
+          // creation of checkbox element
+          const checkElement = document.createElement("input");
+          checkElement.type = "checkbox";
+          checkElement.onchange = checkTodo;
+          checkElement.id = todo.id;
+          checkElement.checked = todo.isDone;
+          checkElement.className = "checkbox--class";
+
+          if (checkElement.checked === true) {
+            element.style.backgroundColor = "lightgreen";
+          } else {
+            element.style.border = "2px solid red";
+          }
+
+          // creation of edit buttton
+          const editButton = document.createElement("button");
+          editButton.innerText = "Edit";
+          editButton.onclick = editTodo;
+          editButton.id = todo.id;
+          editButton.disabled = todo.isDisabled;
+
+          // creation of delete button
+          const deleteButton = document.createElement("button");
+          deleteButton.innerText = "Delete";
+          deleteButton.className = "delete--todo--element";
+          deleteButton.onclick = deleteTodo; // setting attributes in HTML Vs Using DOM.
+          deleteButton.id = todo.id;
+
+          const breakLine = document.createElement("br");
+
+          // create an update button
+          const updateButton = document.createElement("button");
+          updateButton.innerText = "Update";
+          updateButton.onclick = updateTodo;
+          updateButton.id = todo.id;
+
+          // create an input of type text
+          inputTextElement = document.createElement("input");
+          inputTextElement.type = "text";
+          inputTextElement.id = "updateInput";
+
+          // create an input of type date
+          inputDateElement = document.createElement("input");
+          inputDateElement.type = "date";
+          inputDateElement.id = "updateDate";
+
+          todoList.appendChild(outerElement);
+          if (todo.isEdited === false) {
+            outerElement.appendChild(checkElement);
+            outerElement.appendChild(element);
+            outerElement.appendChild(editButton);
+            outerElement.appendChild(deleteButton);
+          } else {
+            outerElement.appendChild(inputTextElement);
+            outerElement.appendChild(inputDateElement);
+            outerElement.appendChild(updateButton);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<!-- 
+// expected to be one type, but turns out to be another type.
+        // One of the common sources of bugs in JavaScript, thats why new language TyepScript getting popular (expanded version of the JavaScript)
+        // helps to deal with the type errors.
+      
+      
+  // deleteButton.style = 'margin-left:12px';
+-->
